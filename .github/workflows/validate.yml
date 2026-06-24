@@ -1,0 +1,55 @@
+name: Validar sistema
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Reconstruir código-fonte
+        run: |
+          cat bundle/source.part.* | base64 --decode | tar -xz -C .
+          test -f server.js
+          test -f public/index.html
+          test -f data/municipalities.json.gz.b64
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Validar sintaxe
+        run: npm run check
+
+      - name: Testar inicialização e saúde
+        env:
+          ADMIN_USERNAME: nicolas
+          ADMIN_NAME: Nicolas
+          ADMIN_PASSWORD: SenhaTemporariaSomenteParaCI123!
+        run: |
+          node server.js > /tmp/territorio-duo.log 2>&1 &
+          PID=$!
+          trap 'kill $PID || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/health > /tmp/health.json; then
+              break
+            fi
+            sleep 1
+          done
+
+          cat /tmp/health.json
+          grep -q '"ok":true' /tmp/health.json
+          grep -q '"municipalities":2008' /tmp/health.json
