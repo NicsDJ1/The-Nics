@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: territorio-duo
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      - key: ADMIN_USERNAME
+        value: nicolas
+      - key: ADMIN_NAME
+        value: Nicolas
+      - key: ADMIN_PASSWORD
+        sync: false
