@@ -1,0 +1,10 @@
+node_modules
+.git
+.env
+.env.*
+data/*.sqlite
+data/*.sqlite-*
+data/initial-admin.txt
+data/server.log
+data/server.pid
+npm-debug.log*
